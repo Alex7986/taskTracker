@@ -2,33 +2,21 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
-	"math/rand"
+
 	"os"
 	"slices"
 	"strconv"
 	"time"
-)
 
-const (
-	taskJson   = "tasks.json"
-	charset    = "abcdefghijklmnopqrstuvwxyz0123456789"
-	eventsJson = "events.json"
+	l "taskTracker/logger"
+	s "taskTracker/store"
 )
 
 var commands = []string{"add", "list", "done", "delete", "close", "help", "showLogs"}
 
-type Task struct {
-	ID          string    `json:"id"`
-	Description string    `json:"description"`
-	Completed   bool      `json:"completed"`
-	CreatedAT   time.Time `json:"created_at"`
-	CompleteAT  time.Time `json:"update_at"`
-}
-
 func help() {
-	fmt.Println("chose the action: add, list, done, delete, close, showLogs")
+	fmt.Println("chose the action: add, list, done, delete, close, showLogs, help")
 }
 
 func printTasks(title string, descrTasks []string) {
@@ -39,28 +27,18 @@ func printTasks(title string, descrTasks []string) {
 	fmt.Println()
 }
 
-func idGen() string {
-	lenght := 5
-	b := make([]byte, lenght)
-	for i := range b {
-		randInd := rand.Intn(len(charset))
-		b[i] = charset[randInd]
-	}
-	return string(b)
-}
-
 func add(str string) error {
-	tasks, err := loadItems[Task](taskJson)
+	tasks, err := s.LoadItems[s.Task](s.TaskJson)
 	if err != nil {
 		return fmt.Errorf("parsing error in add: %w", err)
 	}
 
-	id := idGen()
+	id := s.IdGen()
 	descr := str
 	now := time.Now()
 	compl := false
 
-	t := Task{
+	t := s.Task{
 		ID:          id,
 		Description: descr,
 		Completed:   compl,
@@ -70,7 +48,7 @@ func add(str string) error {
 
 	tasks = append(tasks, t)
 
-	err = saveItems(taskJson, tasks)
+	err = s.SaveItems(s.TaskJson, tasks)
 	if err != nil {
 		return fmt.Errorf("save error in add: %w", err)
 	}
@@ -87,7 +65,7 @@ func list(scanner *bufio.Scanner) error {
 	if err != nil {
 		return fmt.Errorf("convertion error in list: %w", err)
 	}
-	tasks, err := loadItems[Task](taskJson) //parseFile(taskJson)
+	tasks, err := s.LoadItems[s.Task](s.TaskJson) //parseFile(taskJson)
 	if err != nil {
 		return fmt.Errorf("parsing error in list: %w", err)
 	}
@@ -131,13 +109,13 @@ func list(scanner *bufio.Scanner) error {
 			fmt.Println("no tasks")
 		}
 	default:
-		fmt.Println("no such action, retry now")
+		fmt.Println("no such action, try again")
 	}
 	return nil
 }
 
 func done(ID string) error {
-	tasks, err := loadItems[Task](taskJson) //parseFile(taskJson)
+	tasks, err := s.LoadItems[s.Task](s.TaskJson) //parseFile(taskJson)
 	if err != nil {
 		return fmt.Errorf("parse error in complete %w", err)
 
@@ -151,7 +129,7 @@ func done(ID string) error {
 			} else {
 				fmt.Printf("task %#v already complete\n", val.Description)
 			}
-			err = saveItems(taskJson, tasks)
+			err = s.SaveItems(s.TaskJson, tasks)
 			if err != nil {
 				return fmt.Errorf("save error in complete: %w", err)
 			}
@@ -162,14 +140,14 @@ func done(ID string) error {
 }
 
 func del(ID string) error {
-	tasks, err := loadItems[Task](taskJson)
+	tasks, err := s.LoadItems[s.Task](s.TaskJson)
 	if err != nil {
 		return fmt.Errorf("parse error in delete: %w", err)
 	}
 	for ind, val := range tasks {
 		if val.ID == ID {
 			tasks = append(tasks[:ind], tasks[ind+1:]...)
-			if err = saveItems(taskJson, tasks); err != nil {
+			if err = s.SaveItems(s.TaskJson, tasks); err != nil {
 				return fmt.Errorf("error when saving after deletion: %w", err)
 			} // error
 			fmt.Printf("task %#v sucesesfully delete\n", val.Description)
@@ -189,8 +167,8 @@ func forAction() string {
 		scanner.Scan()
 		action := scanner.Text()
 		if !slices.Contains(commands, action) {
-			fmt.Println("no such command, retry now")
-			if logErr := eventLogger(eventsJson, action, fmt.Errorf("invalid command")); logErr != nil {
+			fmt.Println("no such command, try again")
+			if logErr := l.Log(s.EventsJson, action, fmt.Errorf("invalid command")); logErr != nil {
 				fmt.Println("unsucesessful save event")
 			}
 			continue
@@ -208,14 +186,14 @@ func handleUserInput(scanner *bufio.Scanner, commName string, prompt string, act
 
 	if err := actionFunc(userInput); err != nil {
 		fmt.Printf("%s error, try again\n", commName)
-		logErr := eventLogger(eventsJson, fullInput, err)
+		logErr := l.Log(s.EventsJson, fullInput, err)
 		if logErr != nil {
 			fmt.Println("unsucesessful save event + penis")
 			fmt.Println(logErr)
 		}
 		return err
 	}
-	logErr := eventLogger(eventsJson, fullInput, nil)
+	logErr := l.Log(s.EventsJson, fullInput, nil)
 	if logErr != nil {
 		fmt.Println("unsucesessful save event")
 	}
@@ -225,7 +203,7 @@ func handleUserInput(scanner *bufio.Scanner, commName string, prompt string, act
 func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("chose the action: add, list, done, delete, close, showLogs")
+	fmt.Println("chose the action: add, list, done, delete, close, showLogs, help")
 	for {
 		action := forAction()
 
@@ -240,12 +218,13 @@ func main() {
 			err := list(scanner)
 
 			if err != nil {
-				if logErr := eventLogger(eventsJson, "list", err); logErr != nil {
+				if logErr := l.Log(s.EventsJson, "list", err); logErr != nil {
 					fmt.Println("unsucesessful save event")
 				}
+				fmt.Println("no such command, try again")
 				continue
 			}
-			if logErr := eventLogger(eventsJson, "list", nil); logErr != nil {
+			if logErr := l.Log(s.EventsJson, "list", nil); logErr != nil {
 				fmt.Println("unsucesessful save event")
 			}
 
@@ -261,24 +240,24 @@ func main() {
 				continue
 			}
 		case "close":
-			if logErr := eventLogger(eventsJson, "close", nil); logErr != nil {
+			if logErr := l.Log(s.EventsJson, "close", nil); logErr != nil {
 				fmt.Println("unsucesessful save event")
 			}
 			os.Exit(0)
 		case "help":
-			if logErr := eventLogger(eventsJson, "help", nil); logErr != nil {
+			if logErr := l.Log(s.EventsJson, "help", nil); logErr != nil {
 				fmt.Println("unsucesessful save event")
 			}
 			help()
 		case "showLogs":
-			if err := showEvents(eventsJson); err != nil {
+			if err := l.ShowEvents(s.EventsJson); err != nil {
 				fmt.Println("showLogs error, try again")
-				if logErr := eventLogger(eventsJson, "showLogs", err); logErr != nil {
+				if logErr := l.Log(s.EventsJson, "showLogs", err); logErr != nil {
 					fmt.Println("unsucesessful save event")
 				}
 				continue
 			}
-			if logErr := eventLogger(eventsJson, "showLogs", nil); logErr != nil {
+			if logErr := l.Log(s.EventsJson, "showLogs", nil); logErr != nil {
 				fmt.Println("unsucesessful save event")
 			}
 		default:
@@ -286,81 +265,4 @@ func main() {
 		}
 	}
 
-}
-
-type Event struct {
-	CreatedAT string `json:"created_at"`
-	UserInput string `json:"user_input"`
-	ErrorText string `json:"error_text"`
-}
-
-func eventLogger(fileName string, text string, err error) error {
-	var errText string
-	if err != nil {
-		errText = err.Error()
-	} else {
-		errText = ""
-	}
-	event := Event{
-		CreatedAT: time.Now().Format("2006-01-02 15:04"),
-		UserInput: text,
-		ErrorText: errText,
-	}
-	events, err := loadItems[Event](fileName)
-	if err != nil {
-		return fmt.Errorf("parsing error in eventLogger: %w", err)
-	}
-	events = append(events, event)
-	if err = saveItems(fileName, events); err != nil {
-		return fmt.Errorf("saving error in saveEvents: %w", err)
-	}
-	return nil
-}
-
-func showEvents(filename string) error {
-	events, err := loadItems[Event](filename)
-	if err != nil {
-		return fmt.Errorf("parsing error in showEvents: %w", err)
-	}
-	jsonData, err := json.MarshalIndent(events, "", "\t")
-	if err != nil {
-		return fmt.Errorf("converse error in showEvents")
-	}
-	fmt.Println(string(jsonData))
-	return nil
-}
-
-func loadItems[T Event | Task](filename string) ([]T, error) {
-	var items []T
-
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return items, nil
-		}
-		return nil, err
-	}
-
-	if len(data) == 0 {
-		items = []T{}
-	} else {
-		err = json.Unmarshal(data, &items)
-		if err != nil {
-			return nil, err
-		}
-
-	}
-	return items, nil
-}
-
-func saveItems[T Event | Task](filename string, items []T) error {
-	jsonData, err := json.MarshalIndent(items, "", "\t")
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile(filename, jsonData, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
 }

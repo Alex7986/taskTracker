@@ -1,7 +1,67 @@
 [
 	{
-		"created_at": "2025-08-16 18:28",
-		"user_input": "elda",
+		"created_at": "2025-08-22 15:39",
+		"user_input": "her",
 		"error_text": "invalid command"
+	},
+	{
+		"created_at": "2025-08-22 15:39",
+		"user_input": "help",
+		"error_text": ""
+	},
+	{
+		"created_at": "2025-08-22 15:39",
+		"user_input": "add $%!#@",
+		"error_text": ""
+	},
+	{
+		"created_at": "2025-08-22 15:39",
+		"user_input": "her",
+		"error_text": "invalid command"
+	},
+	{
+		"created_at": "2025-08-22 15:39",
+		"user_input": "list",
+		"error_text": "convertion error in list: strconv.Atoi: parsing \"chlen\": invalid syntax"
+	},
+	{
+		"created_at": "2025-08-22 15:39",
+		"user_input": "done elda",
+		"error_text": "no task that such ID: elda"
+	},
+	{
+		"created_at": "2025-08-22 15:40",
+		"user_input": "delete eldishe",
+		"error_text": "no task that such ID: eldishe"
+	},
+	{
+		"created_at": "2025-08-22 15:41",
+		"user_input": "list",
+		"error_text": ""
+	},
+	{
+		"created_at": "2025-08-22 15:41",
+		"user_input": "penis",
+		"error_text": "invalid command"
+	},
+	{
+		"created_at": "2025-08-22 15:41",
+		"user_input": "help",
+		"error_text": ""
+	},
+	{
+		"created_at": "2025-08-22 15:41",
+		"user_input": "close",
+		"error_text": ""
+	},
+	{
+		"created_at": "2025-08-22 16:36",
+		"user_input": "add penis",
+		"error_text": ""
+	},
+	{
+		"created_at": "2025-08-22 16:36",
+		"user_input": "close",
+		"error_text": ""
 	}
 ]
