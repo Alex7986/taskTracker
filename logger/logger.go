@@ -3,8 +3,9 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
-	s "taskTracker/store"
 	"time"
+
+	s "github.com/Alex7986/taskTracker/store"
 )
 
 func ShowEvents(filename string) error {
