@@ -15,7 +15,7 @@ type Task struct {
 	Description string    `json:"description"`
 	Completed   bool      `json:"completed"`
 	CreatedAT   time.Time `json:"created_at"`
-	CompleteAT  time.Time `json:"update_at"`
+	UpdateAT    time.Time `json:"update_at"`
 }
 
 type Event struct {

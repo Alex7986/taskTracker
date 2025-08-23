@@ -49,7 +49,7 @@ func add(str string) error {
 		Description: descr,
 		Completed:   compl,
 		CreatedAT:   now,
-		CompleteAT:  now,
+		UpdateAT:    now,
 	}
 
 	tasks = append(tasks, t)
@@ -130,7 +130,7 @@ func done(ID string) error {
 		if val.ID == ID {
 			if !tasks[ind].Completed {
 				tasks[ind].Completed = true
-				tasks[ind].CompleteAT = time.Now()
+				tasks[ind].UpdateAT = time.Now()
 				g.Printf("task %#v complete \n", tasks[ind].Description)
 			} else {
 				r.Printf("task %#v already complete\n", val.Description)
